@@ -1,0 +1,12 @@
+ARG policy STCF
+ARG jlist 100,1,1
+
+Here is the job list, with the run time of each job: 
+  Job 0 ( length = 100.0 )
+  Job 1 ( length = 1.0 )
+  Job 2 ( length = 1.0 )
+
+
+** Solutions **
+
+Error: Policy STCF is not available.
