@@ -8,20 +8,50 @@
 - Avg Turnaround Time: 333.33
 - Avg Response Time: 133.33
 - Avg Wait Time: 133.33
-- **Analysis**: 按到达顺序运行到完成，实现简单无额外开销。但响应时间随任务位置线性增加，后续任务等待久，存在护航效应。
+- **分析**: 按到达顺序运行到完成，实现简单无额外开销。但响应时间随任务位置线性增加，后续任务等待久，存在护航效应。
 
 ### SJF
 - Execution order: Job 0 → Job 1 → Job 2
 - Avg Turnaround Time: 333.33
 - Avg Response Time: 133.33
 - Avg Wait Time: 133.33
-- **Analysis**: 当前任务顺序已是最短优先，故与 FIFO 结果相同。若打乱顺序（如 300, 100, 200），SJF 平均周转时间会显著优于 FIFO。SJF 在非抢占式调度中能最小化平均周转时间。
+- **分析**: 当前任务顺序已是最短优先，故与 FIFO 结果相同。若顺序改为 [300, 100, 200]，SJF 会优先执行短任务，平均周转时间显著优于 FIFO。SJF 在非抢占式调度中能最小化平均周转时间。
 
 ### RR (Quantum = 10)
 - Avg Turnaround Time: 456.67
 - Avg Response Time: 10.00
 - Avg Wait Time: 256.67
-- **Analysis**: 响应时间极快且公平，适合交互式系统。但频繁切换导致总完成时间拉长，平均周转时间比 FIFO/SJF 高出约 37%，整体吞吐量下降。时间片越小 → 响应越快但切换开销越大。
+- **分析**: 响应时间极快且公平，适合交互式系统。但频繁切换导致总完成时间拉长，平均周转时间比 FIFO/SJF 高出约 37%，整体吞吐量下降。时间片越小 → 响应越快但切换开销越大。
+
+## Q2 — Convoy Effect & SJF Advantage
+**Jobs:** lengths = [300, 100, 200], all arrive at time 0, seed = 1234
+
+### FIFO
+- Execution order: Job 0(300) → Job 1(100) → Job 2(200)
+- Avg Turnaround Time: 433.33
+- Avg Response Time: 233.33
+- **分析**: 长任务先运行，短任务 Job1 等待 300 才开始，护航效应明显。相比 Q1 顺序，平均周转时间从 333.33 变差到 433.33。
+
+### SJF
+- Execution order: Job 0 → Job 1 → Job 2（与 FIFO 相同）
+- Avg Turnaround Time: 333.33
+- Avg Response Time: 133.33
+- **分析**: 当前输入顺序下执行顺序未改变。原理说明：SJF 优先运行已到达的最短任务；若允许重排，会按 Job1→Job2→Job0 执行，平均周转降至 333.33，显著优于 FIFO 的 433.33。
+
+## Q3 — RR Quantum Size Effects
+**Jobs:** lengths = [100, 200, 300], all arrive at time 0, seed = 1234
+
+| Quantum | Avg Response | Avg Turnaround | Observation |
+|---|---|---|---|
+| 1 | ~1.00 | ~599.00 | 响应最优；切换开销极大 |
+| 10 | 10.00 | 456.67 | 响应与周转平衡 |
+| 50 | ~50.00 | ~400.00 | 响应延迟上升，周转改善 |
+| 300 | 133.33 | 333.33 | 等价 FIFO 行为 |
+
+**分析**:
+- 时间片越小 → 响应越快、交互体验越好，但上下文切换越频繁，总开销上升、周转时间拉长
+- 时间片 ≥ 最长任务时长 → RR 完全退化为 FIFO，失去公平性但吞吐量最优
+- 设计原则：时间片应远小于典型交互响应阈值，同时足够大以减少切换开销
 
 ## Summary
 - **FIFO**: 最简单、无开销；但不公平，短任务可能等很久
